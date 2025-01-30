@@ -1,13 +1,21 @@
-// src/components/FilterDrawer.js
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Drawer, Box, Typography, Divider, FormControlLabel, Checkbox, Button } from '@mui/material';
+import { toggleFilter, resetFilters, selectFilters } from '../redux/filtersSlice';
 
-function FilterDrawer({ open, onClose, filters, onCheckboxChange, onApplyFilters, onRemoveFilters }) {
+function FilterDrawer({ open, onClose, onApplyFilters, onRemoveFilters }) {
+  const dispatch = useDispatch();
+  const filters = useSelector(selectFilters);
+
+  const handleCheckboxChange = (filterType, filterName, checked) => {
+    dispatch(toggleFilter({ filterType, filterName, value: checked }));
+  };
+
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box sx={{ width: 250, padding: 2, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ width: 300, padding: 2, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h6" gutterBottom>
-          Filter Options
+          Filter Data By
         </Typography>
         <Divider sx={{ width: '100%', marginBottom: 2 }} />
         
@@ -15,33 +23,18 @@ function FilterDrawer({ open, onClose, filters, onCheckboxChange, onApplyFilters
         <Typography variant="subtitle1" gutterBottom>
           Vehicle Make
         </Typography>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={filters.vehicleMake.Ford}
-              onChange={(e) => onCheckboxChange('vehicleMake', 'Ford', e.target.checked)}
-            />
-          }
-          label="Ford"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={filters.vehicleMake.Cadillac}
-              onChange={(e) => onCheckboxChange('vehicleMake', 'Cadillac', e.target.checked)}
-            />
-          }
-          label="Cadillac"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={filters.vehicleMake.Jeep}
-              onChange={(e) => onCheckboxChange('vehicleMake', 'Jeep', e.target.checked)}
-            />
-          }
-          label="Jeep"
-        />
+        {Object.keys(filters.vehicleMake).map((make) => (
+          <FormControlLabel
+            key={make}
+            control={
+              <Checkbox
+                checked={filters.vehicleMake[make]}
+                onChange={(e) => handleCheckboxChange('vehicleMake', make, e.target.checked)}
+              />
+            }
+            label={make}
+          />
+        ))}
 
         <Divider sx={{ width: '100%', marginY: 2 }} />
         
@@ -49,33 +42,35 @@ function FilterDrawer({ open, onClose, filters, onCheckboxChange, onApplyFilters
         <Typography variant="subtitle1" gutterBottom>
           Duration
         </Typography>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={filters.duration['Last month']}
-              onChange={(e) => onCheckboxChange('duration', 'Last month', e.target.checked)}
-            />
-          }
-          label="Last month"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={filters.duration['This month']}
-              onChange={(e) => onCheckboxChange('duration', 'This month', e.target.checked)}
-            />
-          }
-          label="This month"
-        />
-        {/* Add more filters for duration... */}
+        {Object.keys(filters.duration).map((duration) => (
+          <FormControlLabel
+            key={duration}
+            control={
+              <Checkbox
+                checked={filters.duration[duration]}
+                onChange={(e) => handleCheckboxChange('duration', duration, e.target.checked)}
+              />
+            }
+            label={duration}
+          />
+        ))}
 
         <Box sx={{ marginTop: 2, display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-          <Button variant="outlined" onClick={onRemoveFilters}>
-            Remove Filter
-          </Button>
-          <Button variant="contained" color="primary" onClick={onApplyFilters}>
-            Apply Filter
-          </Button>
+        <Button 
+          variant="outlined" 
+          sx={{ color: '#ff9926', borderColor: '#ff9926', margin: '10px' }} 
+          onClick={() => dispatch(resetFilters())}
+        >
+          Remove Filter
+        </Button>
+        <Button 
+          variant="contained" 
+          sx={{ backgroundColor: '#ff9926', color: '#fff', '&:hover': { backgroundColor: '#e68620' }, margin: '10px' }} 
+          onClick={onApplyFilters}
+        >
+          Apply Filter
+        </Button>
+
         </Box>
       </Box>
     </Drawer>

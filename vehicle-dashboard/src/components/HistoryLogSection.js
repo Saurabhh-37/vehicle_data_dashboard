@@ -1,41 +1,94 @@
-// src/components/HistoryLogSection.js
-import React from 'react';
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-
-const historyData = [
-  { id: 1, action: 'Item added', date: '04/01/24' },
-  { id: 2, action: 'Item removed', date: '04/02/24' },
-  { id: 3, action: 'Item updated', date: '04/03/24' },
-  { id: 4, action: 'Item added', date: '04/04/24' },
-  { id: 5, action: 'Item removed', date: '04/05/24' },
-];
+import React, { useEffect, useState } from 'react';
+import {
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+} from '@mui/material';
 
 function HistoryLogSection() {
+  const [historyData, setHistoryData] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  useEffect(() => {
+    const fetchHistoryLog = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/inventory/history-log');
+        const data = await response.json();
+        setHistoryData(data);
+      } catch (error) {
+        console.error('Error fetching history log:', error);
+      }
+    };
+
+    fetchHistoryLog();
+  }, []);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const displayedRows = historyData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
     <Paper sx={{ padding: 2 }}>
       <Typography variant="h6" component="h3" gutterBottom>
         History Log
       </Typography>
-
-      {/* Table displaying the history log */}
       <TableContainer>
-        <Table sx={{ minWidth: 650 }} aria-label="history log table">
+        <Table sx={{ minWidth: 800 }} aria-label="history log table">
           <TableHead>
             <TableRow>
-              <TableCell>Action</TableCell>
               <TableCell>Date</TableCell>
+              <TableCell>New Inventory</TableCell>
+              <TableCell>New Total MSRP</TableCell>
+              <TableCell>New Average MSRP</TableCell>
+              <TableCell>Used Inventory</TableCell>
+              <TableCell>Used Total MSRP</TableCell>
+              <TableCell>Used Average MSRP</TableCell>
+              <TableCell>CPO Inventory</TableCell>
+              <TableCell>CPO Total MSRP</TableCell>
+              <TableCell>CPO Average MSRP</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {historyData.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.action}</TableCell>
-                <TableCell>{row.date}</TableCell>
+            {displayedRows.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell>{row.period}</TableCell>
+                <TableCell>{row.new.count}</TableCell>
+                <TableCell>{row.new.totalMSRP}</TableCell>
+                <TableCell>{row.new.averageMSRP}</TableCell>
+                <TableCell>{row.used.count}</TableCell>
+                <TableCell>{row.used.totalMSRP}</TableCell>
+                <TableCell>{row.used.averageMSRP}</TableCell>
+                <TableCell>{row.cpo.count}</TableCell>
+                <TableCell>{row.cpo.totalMSRP}</TableCell>
+                <TableCell>{row.cpo.averageMSRP}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        component="div"
+        count={historyData.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25]}
+      />
     </Paper>
   );
 }
