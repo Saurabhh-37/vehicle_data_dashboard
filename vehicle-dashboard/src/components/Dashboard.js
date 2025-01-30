@@ -1,6 +1,6 @@
-// src/components/Dashboard.js
 import React, { useState } from 'react';
 import Grid from '@mui/material/Grid';
+import { Box } from '@mui/material';
 import TitleSection from './TitleSection';
 import RecentGatheredSection from './RecentGatheredSection';
 import InventoryCountSection from './InventoryCountSection';
@@ -39,7 +39,7 @@ function Dashboard() {
   };
 
   return (
-    <div>
+    <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh", padding: 3 }}>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <TitleSection onFilterClick={toggleDrawer(true)} />
@@ -63,7 +63,7 @@ function Dashboard() {
         onApplyFilters={applyFilters}
         onRemoveFilters={removeFilters}
       />
-    </div>
+    </Box>
   );
 }
 

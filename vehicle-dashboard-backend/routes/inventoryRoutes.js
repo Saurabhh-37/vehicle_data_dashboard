@@ -142,5 +142,677 @@ router.get("/inventory/used-msrp", async (req, res) => {
     }
 });
 
+// GET API to fetch the average Used MSRP (price)
+router.get("/inventory/used-average-msrp", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter the data for used units (assuming a field like 'condition' exists)
+        const usedUnits = data.filter(item => item.condition.toLowerCase() === 'used'); // Adjust the field name accordingly
+
+        // Calculate the total price and count of used units
+        const totalUsedMSRP = usedUnits.reduce((acc, item) => {
+            const price = parseFloat(item.price); // Assuming 'price' is the field name in the CSV
+            if (!isNaN(price)) {
+                return acc + price;
+            }
+            return acc;
+        }, 0);
+
+        // Calculate the average MSRP for used vehicles
+        const averageUsedMSRP = usedUnits.length > 0 ? totalUsedMSRP / usedUnits.length : 0;
+
+        res.json({ averageUsedMSRP: averageUsedMSRP.toFixed(2) });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch used average MSRP data" });
+    }
+});
+
+// GET API to fetch the total number of CPO units
+router.get("/inventory/total-cpo-units", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter the data for CPO units (assuming 'condition' field exists)
+        const cpoUnits = data.filter(item => item.condition.toLowerCase() === "cpo"); // Adjust field name if necessary
+
+        // Count the number of CPO units
+        const totalCPOUnits = cpoUnits.length;
+
+        res.json({ totalCPOUnits });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch total CPO units data" });
+    }
+});
+
+// GET API to fetch the total MSRP for CPO units
+router.get("/inventory/cpo-msrp", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter the data for CPO units (assuming 'condition' field exists)
+        const cpoUnits = data.filter(item => item.condition.toLowerCase() === "cpo"); // Adjust field name if necessary
+
+        // Calculate the total MSRP for CPO units
+        const totalCpoMsrp = cpoUnits.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+
+        res.json({ totalCpoMsrp });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch CPO MSRP data" });
+    }
+});
+
+// GET API to fetch the monthly inventory count
+router.get("/inventory/monthly-count", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Object to store inventory count per month
+        const monthlyCount = {};
+
+        data.forEach(item => {
+            if (item.timestamp) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+                    monthlyCount[monthYear] = (monthlyCount[monthYear] || 0) + 1;
+                }
+            }
+        });
+
+        // Convert the object into an array of { month, count } objects
+        const formattedResponse = Object.keys(monthlyCount).map(month => ({
+            month,
+            count: monthlyCount[month]
+        }));
+
+        // Sort by month in ascending order
+        formattedResponse.sort((a, b) => new Date(a.month) - new Date(b.month));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch monthly inventory count" });
+    }
+});
+
+// GET API to fetch the monthly inventory count for new cars
+router.get("/inventory/monthly-count/new", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Object to store inventory count per month for new cars
+        const monthlyCount = {};
+
+        data.forEach(item => {
+            if (item.timestamp && item.condition && item.condition.toLowerCase() === "new") {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+                    monthlyCount[monthYear] = (monthlyCount[monthYear] || 0) + 1;
+                }
+            }
+        });
+
+        // Convert the object into an array of { month, count } objects
+        const formattedResponse = Object.keys(monthlyCount).map(month => ({
+            month,
+            count: monthlyCount[month]
+        }));
+
+        // Sort by month in ascending order
+        formattedResponse.sort((a, b) => new Date(a.month) - new Date(b.month));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch monthly inventory count for new cars" });
+    }
+});
+
+// GET API to fetch the monthly inventory count for used cars
+router.get("/inventory/monthly-count/used", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Object to store inventory count per month for used cars
+        const monthlyCount = {};
+
+        data.forEach(item => {
+            if (item.timestamp && item.condition && item.condition.toLowerCase() === "used") {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+                    monthlyCount[monthYear] = (monthlyCount[monthYear] || 0) + 1;
+                }
+            }
+        });
+
+        // Convert the object into an array of { month, count } objects
+        const formattedResponse = Object.keys(monthlyCount).map(month => ({
+            month,
+            count: monthlyCount[month]
+        }));
+
+        // Sort by month in ascending order
+        formattedResponse.sort((a, b) => new Date(a.month) - new Date(b.month));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch monthly inventory count for used cars" });
+    }
+});
+
+// GET API to fetch the monthly inventory count for CPO cars (with zero-count months)
+router.get("/inventory/monthly-count/cpo", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Object to store inventory count per month for CPO cars
+        const monthlyCount = {};
+
+        // Get the current date
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1; // JS months are 0-based
+
+        // Initialize all months of the last two years with 0 count
+        for (let year = currentYear - 1; year <= currentYear; year++) {
+            for (let month = 1; month <= 12; month++) {
+                const monthYear = `${year}-${String(month).padStart(2, "0")}`;
+                monthlyCount[monthYear] = 0;
+            }
+        }
+
+        // Process data to count CPO cars per month
+        data.forEach(item => {
+            if (item.timestamp && item.condition && item.condition.toLowerCase() === "cpo") {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+                    if (monthlyCount[monthYear] !== undefined) {
+                        monthlyCount[monthYear] += 1;
+                    }
+                }
+            }
+        });
+
+        // Convert the object into an array of { month, count } objects
+        const formattedResponse = Object.keys(monthlyCount).map(month => ({
+            month,
+            count: monthlyCount[month]
+        }));
+
+        // Sort by month in ascending order
+        formattedResponse.sort((a, b) => new Date(a.month) - new Date(b.month));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch monthly inventory count for CPO cars" });
+    }
+});
+
+// Function to get the start of a ten-day period
+const getTenDayPeriodStart = (date) => {
+    const startDate = new Date(date);
+    const dayOfMonth = startDate.getDate();
+    const tenDayPeriodStart = Math.floor((dayOfMonth - 1) / 10) * 10 + 1;
+    startDate.setDate(tenDayPeriodStart);
+    startDate.setHours(0, 0, 0, 0);
+    return startDate;
+};
+
+// Function to get the start date of the given duration
+const getDurationStartDate = (duration) => {
+    const currentDate = new Date();
+    switch (duration) {
+        case "last-month":
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            currentDate.setDate(1); // Set to the first day of last month
+            break;
+        case "this-month":
+            currentDate.setDate(1); // Set to the first day of the current month
+            break;
+        case "last-3-months":
+            currentDate.setMonth(currentDate.getMonth() - 3);
+            currentDate.setDate(1); // Set to the first day of 3 months ago
+            break;
+        case "last-6-months":
+            currentDate.setMonth(currentDate.getMonth() - 6);
+            currentDate.setDate(1); // Set to the first day of 6 months ago
+            break;
+        case "this-year":
+            currentDate.setMonth(0); // Set to the first month of the current year
+            currentDate.setDate(1); // Set to the first day of the current year
+            break;
+        case "last-year":
+            currentDate.setFullYear(currentDate.getFullYear() - 1);
+            currentDate.setMonth(0); // Set to the first month of last year
+            currentDate.setDate(1); // Set to the first day of last year
+            break;
+        default:
+            return null; // No valid duration, return null
+    }
+    return currentDate;
+};
+
+// GET API to fetch inventory count for every ten days for new cars with duration filter
+router.get("/inventory/ten-day-count", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Get duration from query
+        const { duration } = req.query;
+
+        // Determine the start date for the given duration
+        let durationStartDate = null;
+        if (duration) {
+            durationStartDate = getDurationStartDate(duration);
+            if (!durationStartDate) {
+                return res.status(400).json({ error: "Invalid duration value" });
+            }
+        }
+
+        // Filter out only new cars based on 'condition'
+        const newCars = data.filter(item => item.condition && item.condition.toLowerCase() === "new");
+
+        // Filter cars based on duration
+        const filteredCars = newCars.filter(item => {
+            if (item.timestamp) {
+                const timestampDate = new Date(item.timestamp);
+                // Include the car only if the timestamp is after the duration start date
+                return timestampDate >= durationStartDate;
+            }
+            return false;
+        });
+
+        // Object to store inventory count per 10-day period
+        const tenDayCount = {};
+
+        filteredCars.forEach(item => {
+            if (item.timestamp) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    // Get the start of the ten-day period
+                    const tenDayPeriodStart = getTenDayPeriodStart(date);
+                    const periodKey = tenDayPeriodStart.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+                    
+                    tenDayCount[periodKey] = (tenDayCount[periodKey] || 0) + 1;
+                }
+            }
+        });
+
+        // Generate all the ten-day periods based on the range of timestamps
+        const allDates = filteredCars.map(item => new Date(item.timestamp)).sort((a, b) => a - b);
+        const startDate = new Date(allDates[0]);
+        const endDate = new Date(allDates[allDates.length - 1]);
+
+        // Create an array of all 10-day periods within the date range
+        const dateRanges = [];
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const periodKey = getTenDayPeriodStart(currentDate).toISOString().split("T")[0];
+            dateRanges.push(periodKey);
+            currentDate.setDate(currentDate.getDate() + 10);
+        }
+
+        // Prepare the response by adding zeros for periods without data
+        const formattedResponse = dateRanges.map(period => ({
+            period,
+            count: tenDayCount[period] || 0
+        }));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch inventory count for every ten days" });
+    }
+});
+
+// GET API to fetch inventory count for every ten days for used cars with duration filter
+router.get("/inventory/used-ten-day-count", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Get duration from query
+        const { duration } = req.query;
+
+        // Determine the start date for the given duration
+        let durationStartDate = null;
+        if (duration) {
+            durationStartDate = getDurationStartDate(duration);
+            if (!durationStartDate) {
+                return res.status(400).json({ error: "Invalid duration value" });
+            }
+        }
+
+        // Filter out only used cars based on 'condition'
+        const usedCars = data.filter(item => item.condition && item.condition.toLowerCase() === "used");
+
+        // Filter cars based on duration
+        const filteredCars = usedCars.filter(item => {
+            if (item.timestamp) {
+                const timestampDate = new Date(item.timestamp);
+                // Include the car only if the timestamp is after the duration start date
+                return timestampDate >= durationStartDate;
+            }
+            return false;
+        });
+
+        // Object to store inventory count per 10-day period
+        const tenDayCount = {};
+
+        filteredCars.forEach(item => {
+            if (item.timestamp) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    // Get the start of the ten-day period
+                    const tenDayPeriodStart = getTenDayPeriodStart(date);
+                    const periodKey = tenDayPeriodStart.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+                    
+                    tenDayCount[periodKey] = (tenDayCount[periodKey] || 0) + 1;
+                }
+            }
+        });
+
+        // Generate all the ten-day periods based on the range of timestamps
+        const allDates = filteredCars.map(item => new Date(item.timestamp)).sort((a, b) => a - b);
+        const startDate = new Date(allDates[0]);
+        const endDate = new Date(allDates[allDates.length - 1]);
+
+        // Create an array of all 10-day periods within the date range
+        const dateRanges = [];
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const periodKey = getTenDayPeriodStart(currentDate).toISOString().split("T")[0];
+            dateRanges.push(periodKey);
+            currentDate.setDate(currentDate.getDate() + 10);
+        }
+
+        // Prepare the response by adding zeros for periods without data
+        const formattedResponse = dateRanges.map(period => ({
+            period,
+            count: tenDayCount[period] || 0
+        }));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch inventory count for used cars every ten days" });
+    }
+});
+
+// GET API to fetch inventory count for every ten days for CPO cars with duration filter
+router.get("/inventory/cpo-ten-day-count", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Get duration from query
+        const { duration } = req.query;
+
+        // Determine the start date for the given duration
+        let durationStartDate = null;
+        if (duration) {
+            durationStartDate = getDurationStartDate(duration);
+            if (!durationStartDate) {
+                return res.status(400).json({ error: "Invalid duration value" });
+            }
+        }
+
+        // Filter out only CPO cars based on 'condition'
+        const cpoCars = data.filter(item => item.condition && item.condition.toLowerCase() === "cpo");
+
+        // Filter cars based on duration
+        const filteredCars = cpoCars.filter(item => {
+            if (item.timestamp) {
+                const timestampDate = new Date(item.timestamp);
+                // Include the car only if the timestamp is after the duration start date
+                return timestampDate >= durationStartDate;
+            }
+            return false;
+        });
+
+        // Object to store inventory count per 10-day period
+        const tenDayCount = {};
+
+        filteredCars.forEach(item => {
+            if (item.timestamp) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date)) {
+                    // Get the start of the ten-day period
+                    const tenDayPeriodStart = getTenDayPeriodStart(date);
+                    const periodKey = tenDayPeriodStart.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+                    
+                    tenDayCount[periodKey] = (tenDayCount[periodKey] || 0) + 1;
+                }
+            }
+        });
+
+        // Generate all the ten-day periods based on the range of timestamps
+        const allDates = filteredCars.map(item => new Date(item.timestamp)).sort((a, b) => a - b);
+        const startDate = new Date(allDates[0]);
+        const endDate = new Date(allDates[allDates.length - 1]);
+
+        // Create an array of all 10-day periods within the date range
+        const dateRanges = [];
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const periodKey = getTenDayPeriodStart(currentDate).toISOString().split("T")[0];
+            dateRanges.push(periodKey);
+            currentDate.setDate(currentDate.getDate() + 10);
+        }
+
+        // Prepare the response by adding zeros for periods without data
+        const formattedResponse = dateRanges.map(period => ({
+            period,
+            count: tenDayCount[period] || 0
+        }));
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch inventory count for CPO cars every ten days" });
+    }
+});
+
+// GET API to fetch average MSRP for every ten days for new cars
+router.get("/inventory/new-ten-day-avg-msrp", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter out only new cars based on 'condition'
+        const newCars = data.filter(item => item.condition && item.condition.toLowerCase() === "new");
+
+        // Object to store total MSRP and count of vehicles for each 10-day period
+        const tenDayMSRP = {};
+
+        newCars.forEach(item => {
+            if (item.timestamp && item.price) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date) && !isNaN(item.price)) {
+                    // Get the start of the ten-day period
+                    const tenDayPeriodStart = getTenDayPeriodStart(date);
+                    const periodKey = tenDayPeriodStart.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+                    
+                    // Initialize the period if not present
+                    if (!tenDayMSRP[periodKey]) {
+                        tenDayMSRP[periodKey] = { totalMSRP: 0, count: 0 };
+                    }
+
+                    // Accumulate MSRP and count for the period
+                    tenDayMSRP[periodKey].totalMSRP += parseFloat(item.price);
+                    tenDayMSRP[periodKey].count += 1;
+                }
+            }
+        });
+
+        // Generate all the ten-day periods based on the range of timestamps
+        const allDates = newCars.map(item => new Date(item.timestamp)).sort((a, b) => a - b);
+        const startDate = new Date(allDates[0]);
+        const endDate = new Date(allDates[allDates.length - 1]);
+
+        // Create an array of all 10-day periods within the date range
+        const dateRanges = [];
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const periodKey = getTenDayPeriodStart(currentDate).toISOString().split("T")[0];
+            dateRanges.push(periodKey);
+            currentDate.setDate(currentDate.getDate() + 10);
+        }
+
+        // Prepare the response with average MSRP and zero values where necessary
+        const formattedResponse = dateRanges.map(period => {
+            const periodData = tenDayMSRP[period] || { totalMSRP: 0, count: 0 };
+            const averageMSRP = periodData.count > 0 ? (periodData.totalMSRP / periodData.count).toFixed(2) : 0;
+            return {
+                period,
+                averageMSRP
+            };
+        });
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch average MSRP for new cars every ten days" });
+    }
+});
+
+// GET API to fetch average MSRP for every ten days for used cars
+router.get("/inventory/used-ten-day-avg-msrp", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter out only used cars based on 'condition'
+        const usedCars = data.filter(item => item.condition && item.condition.toLowerCase() === "used");
+
+        // Object to store total MSRP and count of vehicles for each 10-day period
+        const tenDayMSRP = {};
+
+        usedCars.forEach(item => {
+            if (item.timestamp && item.price) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date) && !isNaN(item.price)) {
+                    // Get the start of the ten-day period
+                    const tenDayPeriodStart = getTenDayPeriodStart(date);
+                    const periodKey = tenDayPeriodStart.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+                    
+                    // Initialize the period if not present
+                    if (!tenDayMSRP[periodKey]) {
+                        tenDayMSRP[periodKey] = { totalMSRP: 0, count: 0 };
+                    }
+
+                    // Accumulate MSRP and count for the period
+                    tenDayMSRP[periodKey].totalMSRP += parseFloat(item.price);
+                    tenDayMSRP[periodKey].count += 1;
+                }
+            }
+        });
+
+        // Generate all the ten-day periods based on the range of timestamps
+        const allDates = usedCars.map(item => new Date(item.timestamp)).sort((a, b) => a - b);
+        const startDate = new Date(allDates[0]);
+        const endDate = new Date(allDates[allDates.length - 1]);
+
+        // Create an array of all 10-day periods within the date range
+        const dateRanges = [];
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const periodKey = getTenDayPeriodStart(currentDate).toISOString().split("T")[0];
+            dateRanges.push(periodKey);
+            currentDate.setDate(currentDate.getDate() + 10);
+        }
+
+        // Prepare the response with average MSRP and zero values where necessary
+        const formattedResponse = dateRanges.map(period => {
+            const periodData = tenDayMSRP[period] || { totalMSRP: 0, count: 0 };
+            const averageMSRP = periodData.count > 0 ? (periodData.totalMSRP / periodData.count).toFixed(2) : 0;
+            return {
+                period,
+                averageMSRP
+            };
+        });
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch average MSRP for used cars every ten days" });
+    }
+});
+
+// GET API to fetch average MSRP for every ten days for CPO cars
+router.get("/inventory/cpo-ten-day-avg-msrp", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter out only CPO cars based on 'condition'
+        const cpoCars = data.filter(item => item.condition && item.condition.toLowerCase() === "cpo");
+
+        // Object to store total MSRP and count of vehicles for each 10-day period
+        const tenDayMSRP = {};
+
+        cpoCars.forEach(item => {
+            if (item.timestamp && item.price) {
+                const date = new Date(item.timestamp);
+                if (!isNaN(date) && !isNaN(item.price)) {
+                    // Get the start of the ten-day period
+                    const tenDayPeriodStart = getTenDayPeriodStart(date);
+                    const periodKey = tenDayPeriodStart.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+                    
+                    // Initialize the period if not present
+                    if (!tenDayMSRP[periodKey]) {
+                        tenDayMSRP[periodKey] = { totalMSRP: 0, count: 0 };
+                    }
+
+                    // Accumulate MSRP and count for the period
+                    tenDayMSRP[periodKey].totalMSRP += parseFloat(item.price);
+                    tenDayMSRP[periodKey].count += 1;
+                }
+            }
+        });
+
+        // Generate all the ten-day periods based on the range of timestamps
+        const allDates = cpoCars.map(item => new Date(item.timestamp)).sort((a, b) => a - b);
+        const startDate = new Date(allDates[0]);
+        const endDate = new Date(allDates[allDates.length - 1]);
+
+        // Create an array of all 10-day periods within the date range
+        const dateRanges = [];
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const periodKey = getTenDayPeriodStart(currentDate).toISOString().split("T")[0];
+            dateRanges.push(periodKey);
+            currentDate.setDate(currentDate.getDate() + 10);
+        }
+
+        // Prepare the response with average MSRP and zero values where necessary
+        const formattedResponse = dateRanges.map(period => {
+            const periodData = tenDayMSRP[period] || { totalMSRP: 0, count: 0 };
+            const averageMSRP = periodData.count > 0 ? (periodData.totalMSRP / periodData.count).toFixed(2) : 0;
+            return {
+                period,
+                averageMSRP
+            };
+        });
+
+        res.json(formattedResponse);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch average MSRP for CPO cars every ten days" });
+    }
+});
+
+// GET API to fetch History Log ordered by latest first
+router.get("/inventory/history-log", async (req, res) => {
+    try {
+        const data = await loadCSVData(FILE_PATH);
+
+        // Filter out entries with a timestamp to represent history logs
+        const historyLogs = data.filter(item => item.timestamp);
+
+        // Sort the logs by the timestamp in descending order (latest first)
+        historyLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Optional: you can limit the number of logs returned, for example, top 10 logs
+        const limit = req.query.limit ? parseInt(req.query.limit) : historyLogs.length;
+        const limitedLogs = historyLogs.slice(0, limit);
+
+        // Return the sorted history logs
+        res.json(limitedLogs);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch the history log" });
+    }
+});
 
 module.exports = router;

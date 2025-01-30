@@ -41,28 +41,48 @@ function InventoryCountSection() {
       </Typography>
 
       {/* Buttons to filter data */}
-      <Box sx={{ marginBottom: 2 }}>
-        <Button
-          variant={selectedDataType === 'NEW' ? 'contained' : 'outlined'}
-          onClick={() => handleFilterClick('NEW')}
-          sx={{ marginRight: 1 }}
-        >
-          NEW
-        </Button>
-        <Button
-          variant={selectedDataType === 'USED' ? 'contained' : 'outlined'}
-          onClick={() => handleFilterClick('USED')}
-          sx={{ marginRight: 1 }}
-        >
-          USED
-        </Button>
-        <Button
-          variant={selectedDataType === 'CPO' ? 'contained' : 'outlined'}
-          onClick={() => handleFilterClick('CPO')}
-        >
-          CPO
-        </Button>
-      </Box>
+      {/* Buttons to filter data */}
+<Box sx={{ marginBottom: 2 }}>
+  <Button
+    variant={selectedDataType === "NEW" ? "contained" : "outlined"}
+    onClick={() => handleFilterClick("NEW")}
+    sx={{
+      marginRight: 1,
+      backgroundColor: selectedDataType === "NEW" ? "#ff9926" : "transparent",
+      color: selectedDataType === "NEW" ? "white" : "#ff9926",
+      borderColor: "#ff9926",
+      "&:hover": { backgroundColor: "#e6801a", borderColor: "#e6801a" },
+    }}
+  >
+    NEW
+  </Button>
+  <Button
+    variant={selectedDataType === "USED" ? "contained" : "outlined"}
+    onClick={() => handleFilterClick("USED")}
+    sx={{
+      marginRight: 1,
+      backgroundColor: selectedDataType === "USED" ? "#ff9926" : "transparent",
+      color: selectedDataType === "USED" ? "white" : "#ff9926",
+      borderColor: "#ff9926",
+      "&:hover": { backgroundColor: "#e6801a", borderColor: "#e6801a" },
+    }}
+  >
+    USED
+  </Button>
+  <Button
+    variant={selectedDataType === "CPO" ? "contained" : "outlined"}
+    onClick={() => handleFilterClick("CPO")}
+    sx={{
+      backgroundColor: selectedDataType === "CPO" ? "#ff9926" : "transparent",
+      color: selectedDataType === "CPO" ? "white" : "#ff9926",
+      borderColor: "#ff9926",
+      "&:hover": { backgroundColor: "#e6801a", borderColor: "#e6801a" },
+    }}
+  >
+    CPO
+  </Button>
+</Box>
+
 
       {/* Bar Chart */}
       <ResponsiveContainer width="100%" height={300}>
@@ -72,7 +92,7 @@ function InventoryCountSection() {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="value" fill="#8884d8" />
+          <Bar dataKey="value" fill="#ff9926" />
         </BarChart>
       </ResponsiveContainer>
     </Paper>
